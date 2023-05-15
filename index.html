@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trab. Usabilidade Pratica - Calculadora</title>
+  <script src="trab.js"></script>
+
+</head>
+
+<style>
+    h2{
+        color: #941FA3;
+        font-size: 13px;
+        font-family: Arial, Helvetica, sans-serif;
+        /*text-align: center;
+        */
+    }
+
+    h3 {
+      color: #941FA3;
+      font-size: 12px;
+      margin-top: -5px;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    h4{
+        color: #66d40b ;
+        /*
+        text-align: center;
+    */
+    }
+
+    h5{
+      color: #941FA3;
+      font-size: 20px;
+      margin-top: 30px;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+        text-align: center;
+        font-family: Arial, Helvetica, sans-serif;
+        background-color: rgb(15, 2, 51);
+    }
+
+    input[type="text"], button {
+        padding: 4px;
+        font-size: 15px;
+    }
+
+    button {
+        color: rgb(190, 22, 22);
+        cursor: pointer;
+        margin-top: 9px;
+        width: 79px;
+        font-size: 16px;
+        
+
+    }
+
+    input[type="text"], placeholder {
+      margin-top: 0px;
+    }
+
+    #memoria {
+      color: aqua;
+    }
+
+    .calculadora {
+      width: 318px;
+      border: 1px solid #ccc;
+      padding: 25px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .calculadora .numeros {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      margin-bottom: 25px;
+      padding: 30px;
+      justify-content: center;
+      align-items: center;
+      
+    }
+
+    .calculadora .numeros button {
+      width: 75px;
+      background-color: #a5dd77;
+    }
+
+    .calculadora .operadores {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .calculadora .operadores button {
+      background-color: rgb(199, 94, 94);
+    }
+
+    .calculadora input[type="text"] {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 5px;
+    }
+
+
+</style>
+
+<body>
+
+  
+  <h2>Trabalho Usabilidade e Desenvolvimento Web - Prática</h2>
+  <h3>Guilherme Victor - RA1221141686</h3>
+  <div class="calculadora">
+  <h5>Calculadora</h5>
+  <input id="inputValues" type="text" placeholder="Digite a expressão que desejar! Ex: 250+12">
+  <button onclick="calculate()">Resultado</button>
+  <h4>Resultado da Operação:</h4>
+  <p id="memoria"></p>
+
+  <div class="operadores">
+  <button onclick="appendOperator('+')">+</button>
+  <button onclick="appendOperator('-')">-</button>
+  <button onclick="appendOperator('*')">x</button>
+  <button onclick="appendOperator('/')">/</button>
+
+  </div>
+
+  <div class="numeros">
+    <button onclick="appendNumber(0)">0</button>
+    <button onclick="appendNumber(1)">1</button>
+    <button onclick="appendNumber(2)">2</button>
+    <button onclick="appendNumber(3)">3</button>
+    <button onclick="appendNumber(4)">4</button>
+    <button onclick="appendNumber(5)">5</button>
+    <button onclick="appendNumber(6)">6</button>
+    <button onclick="appendNumber(7)">7</button>
+    <button onclick="appendNumber(8)">8</button>
+    <button onclick="appendNumber(9)">9</button>
+    <button onclick="appendNumber(10)">10</button>
+  </div>
+
+  <script>
+    function calculate() {
+      const expressao = document.getElementById('inputValues').value;
+      const resultado = validarExpressao(expressao);
+      document.getElementById('resultado').textContent = resultado;
+    }
+
+    function validarExpressao(expressao) {
+      const cookies = cookieExpressao(expressao);
+      const values = [];
+      const operadors = [];
+
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+
+        if (numero(cookie)) {
+          values.push(parseFloat(cookie));
+        } else if (isOperador(cookie)) {
+          while (operadors.length > 0 && temPrecedencia(operadors[operadors.length - 1], cookie)) {
+            const operador = operadors.pop();
+            const numero2 = values.pop();
+            const numero1 = values.pop();
+            const resultado = applyOperador(numero1, operador, numero2);
+            values.push(resultado);
+          }
+          operadors.push(cookie);
+        }
+      }
+
+      while (operadors.length > 0) {
+        const operador = operadors.pop();
+        const numero2 = values.pop();
+        const numero1 = values.pop();
+        const resultado = applyOperador(numero1, operador, numero2);
+        values.push(resultado);
+      }
+
+      const resultado = values.pop();
+      const memoria = document.getElementById('memoria');
+      memoria.textContent = expressao + ' = ' + resultado;
+
+      return resultado;
+    }
+
+    function cookieExpressao(expressao) {
+      const cookies = [];
+      let currentCookie = '';
+
+      for (let i = 0; i < expressao.length; i++) {
+        const char = expressao.charAt(i);
+
+        if (isOperador(char) || char === '(' || char === ')') {
+          if (currentCookie !== '') {
+            cookies.push(currentCookie);
+            currentCookie = '';
+          }
+          cookies.push(char);
+        } else if (char !== ' ') {
+            currentCookie += char;
+        }
+      }
+
+      if (currentCookie !== '') {
+        cookies.push(currentCookie);
+      }
+
+      return cookies;
+    }
+
+    function numero (cookie) {
+      return !isNaN(parseFloat(cookie)) && isFinite(cookie);
+    }
+
+    function isOperador(cookie) {
+      return cookie === '+' || cookie === '-' || cookie === '*' || cookie === '/';
+    }
+
+    function temPrecedencia(operador1, operador2) {
+      return (operador1 === '*' || operador1 === '/') && (operador2 === '+' || operador2 === '-');
+    }
+
+    function applyOperador(numero1, operador, numero2) {
+      switch (operador) {
+        case '+':
+          return numero1 + numero2;
+        case '-':
+          return numero1 - numero2;
+        case '*':
+          return numero1 * numero2;
+        case '/':
+          return numero1 / numero2;
+      }
+    }
+
+    function appendOperator(operador) {
+      const input = document.getElementById('inputValues');
+      input.value += operador;
+    }
+
+    function appendNumber(numero) {
+      const input = document.getElementById('inputValues');
+      input.value += numero;
+    }
+
+  </script>
+</body>
+</html>
